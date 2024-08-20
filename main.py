@@ -23,8 +23,8 @@ decoded_json_str = base64.b64decode(service_account_info).decode('utf-8')
 decoded_service_account_info = json.loads(decoded_json_str)
 
 # Authenticate and create a Google Sheets API service instance
-credentials111111111111 = service_account.Credentials.from_service_account_info(decoded_service_account_info)
-service = build('sheets', 'v4', credentials=credentials111111111111)
+credentials = service_account.Credentials.from_service_account_info(decoded_service_account_info)
+service = build('sheets', 'v4', credentials=credentials)
 
 # Replace with your actual Google Spreadsheet ID
 spreadsheet_id = "1X-COXRF4-Us_5lqIVFn2OzbM41fkEBJmAU_BcB9hIfg"
