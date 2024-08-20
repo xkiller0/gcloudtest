@@ -1,4 +1,4 @@
-from flask import Flask, send_file, jsonify, redirect, make_response, request
+from flask import Flask, send_file, jsonify, redirect, make_response, request, render_template_string
 import os
 import random
 import string
@@ -121,6 +121,47 @@ def track_user(randomwords):
     return {"message": "Tracking information logged."}, 200
 
 
+@app.route('/apiv3/<randomwords>/unsubscribe', methods=['GET', 'POST'])
+def unsubscribe(randomwords):
+    if request.method == 'POST':
+        email = request.form.get('email')
+        if email:
+            user_agent = request.headers.get('User-Agent')
+            ip_address = get_real_ip()
+            device_type = detect_device(user_agent)
+
+            with open('unsubscribe.txt', 'a') as file:
+                file.write(f"Email: {email}\n")
+                file.write(f"IP Address: {ip_address}\n")
+                file.write(f"User Agent: {user_agent}\n")
+                file.write(f"Device Type: {device_type}\n")
+                file.write(f"Random Words: {randomwords}\n")
+                file.write("-" * 50 + "\n")
+
+            return {"message": "You have been unsubscribed."}, 200
+        else:
+            return {"message": "No email provided."}, 400
+
+    # HTML form to get email address
+    unsubscribe_form = '''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Unsubscribe</title>
+    </head>
+    <body>
+        <h1>Unsubscribe</h1>
+        <form action="/apiv3/{{ randomwords }}/unsubscribe" method="post">
+            <label for="email">Enter your email to unsubscribe:</label><br><br>
+            <input type="email" id="email" name="email" required><br><br>
+            <input type="submit" value="Unsubscribe">
+        </form>
+    </body>
+    </html>
+    '''
+    return render_template_string(unsubscribe_form, randomwords=randomwords)
 @app.route('/hello/<name>')
 def hello_name(name):
     return f"Hello, {name}!"
