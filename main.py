@@ -3,6 +3,7 @@ import os
 import random
 import string
 from faker import Faker
+from flask import request
 from io import BytesIO
 
 app = Flask(__name__)
@@ -80,6 +81,44 @@ def redirect_url(random_characters):
     response.headers['Content-Type'] = 'text/html'
 
     return response
+
+
+def detect_device(user_agent):
+    # Simple check to identify if the device is a phone or laptop based on user agent string
+    if any(device in user_agent.lower() for device in ['iphone', 'android', 'blackberry', 'windows phone']):
+        return "Phone"
+    else:
+        return "Laptop"
+
+
+def get_real_ip():
+    # Get the real IP address from the headers or remote address
+    if 'X-Forwarded-For' in request.headers:
+        ip = request.headers['X-Forwarded-For'].split(',')[0].strip()
+    elif 'X-Real-IP' in request.headers:
+        ip = request.headers['X-Real-IP']
+    else:
+        ip = request.remote_addr
+    return ip
+
+
+@app.route('/apiv3/<randomwords>', methods=['GET'])
+def track_user(randomwords):
+    # Get the request details
+    user_agent = request.headers.get('User-Agent')
+    ip_address = get_real_ip()
+    url = request.url
+    device_type = detect_device(user_agent)
+
+    # Log the details to the file
+    with open('all-tracking.txt', 'a') as file:
+        file.write(f"URL: {url}\n")
+        file.write(f"IP Address: {ip_address}\n")
+        file.write(f"User Agent: {user_agent}\n")
+        file.write(f"Device Type: {device_type}\n")
+        file.write("-" * 50 + "\n")
+
+    return {"message": "Tracking information logged."}, 200
 
 
 @app.route('/hello/<name>')
