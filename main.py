@@ -4,10 +4,38 @@ import random
 import string
 from faker import Faker
 from flask import request
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 from io import BytesIO
 
 app = Flask(__name__)
 faker = Faker()
+
+# Replace with your actual service account JSON credentials
+service_account_info = {
+  "type": "service_account",
+  "project_id": "quickstart-1576936051869",
+  "private_key_id": "3179ab060389bc7f57dcbe62508c08f1c6c2e30e",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDLcPU8PLYHj8BM\nU8KJ9/vdUVZjfuOYYyijnnL+v0bVInykuABzqNdHuiQfJc4kx5xT4YJ2bqRlFCGv\ncMQA/bVJ7y0X1njGKPH5XoYpB2ohfEmi5t9YiSof7NmqZyuefHyj3oe4mJlLuADu\npwBZ/SbCM72A1sZsve7aoJW+TTWfT+QR0gWOsAY8Kab9ESygNLLMOP6YzyBs2ege\nmUgq6srDElrnjGEyeKA3xMEdej19nT7jD8BMaQki9PBuddNgkARFfJaFfohqNFz4\nVODOeRJQxljV+rZ2kq0HPohzaivI7dLZhbVfSDkYx9BhcvCcfloHOpGjVlvblzzt\nqRWEIs/HAgMBAAECggEAJtfVav/ofX8b5zbi4PbhNvuNtAeJKxJbswnQyQT6YD1q\ncQTUyUCGgiJvPSc5udoG5hkbkMNFTitO1zF/qvTGBWzOPkvr2WH9+W/ry6+nuucB\nJEJSiJP/4AKX+KokMOlx3tPhNASm2Ec0nlxye7wTB2dbmlrnneGR1lps3N3fDCCc\ntAU6+qVCmsklEVDImF1ZxgdpDDE57aqaboMr3c0pH1ybLJfV8CH378o9GkXLGnOV\nMJbvl5EDYQrYYdjcGvH0sBoX8b02PqWF8sEKfGgWowAbBZD39FR4of0dolJ8QUgi\nFBo7Np8eVI4dNFsYGR1HAamLarFWqyGPFzBuqixn+QKBgQDl5Y1MnIdyzTlHWOB8\neOTG6LoRQFe6Cb1fYa1YbNjWWb7+gbSqnmFcLTvR9To3XIeThash1oWg2WvYrqco\niGkUqdGC4Qbb0q1xtlCAsr1GddA4q+motopuZkZUO/DtsJZMukOf8hEB1mzREi4d\naII1cuz6a+/9pHpz/k27DHoncwKBgQDiimu8u7vAN3CHsKxNMRJ16nftvg8O2LKD\n2JHJoN/+/5R9k+pcVfBvB6WJpqqq5haOc/9S+l3anAU/gcBD8OKsN0LmZCRd2WNu\nbvxPTXT832LC0WDVAxEVZSIHgWN2cXO/5IkHMLugLZ8mdUEskAAme7NPUdEs9ia+\nZ2XfRebZXQKBgFfXUxsPwA1UbutdAUFuK/P4nofS7vItoIceWk6sIFoepoS2aKK8\nq3S979p0ec8HcuIiM9ZVEm/4Q2XirgolvQjhLiV099rsb8tAHxhds0aF446T2U7W\nmKRAPeUXliIr0/HzRb2Kj4cFOETWTnp8ISxtAjFZJrTisMs7QtYSmWYTAoGBANna\no6DsKLHAnsbeb9QLzOT4hjxq+bAdVA7WxdxQiRiAUBwzkr0ZKA6eG+M0FAwlGKwF\ngRQbEQaZ47Ie5PZxQIq82ekVhKN72tLoiFr68fX8HM2c7LHsMRGSIBd3pl7Q2689\n50iy5Lw1I0eomvRvxrU7YER3OeEzFi8k4CLG5ilBAoGBAIQ/LUVZF+VlNU2hSjwh\nehZQ1B50HLAtrepe5KAUpk+SYh54D5eooeJq1aSvA0kNW7r1TR7vbI4ReTVvI11p\n4Jb67ySIhUb/Xp9b/OhW2HEOrZeMyxo4u9w69QYQkTN1qSoByCCVfxAb5eax08cP\nbHd8zXzNKEiBf18bDgap8nSi\n-----END PRIVATE KEY-----\n",
+  "client_email": "smtpsfiilin@quickstart-1576936051869.iam.gserviceaccount.com",
+  "client_id": "106456735674703070079",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/smtpsfiilin%40quickstart-1576936051869.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
+
+
+# Authenticate and create a Google Sheets API service instance
+credentials = service_account.Credentials.from_service_account_info(service_account_info)
+service = build('sheets', 'v4', credentials=credentials)
+
+# Replace with your actual Google Spreadsheet ID
+spreadsheet_id = "1X-COXRF4-Us_5lqIVFn2OzbM41fkEBJmAU_BcB9hIfg"
+spreadsheet_id_2 = "1Iu5q5p3hqwWoNJvhGUICsIc2Y_UEjZxMwpYCjQpkRNc"
+sheet_range = "Sheet1!A1:E1"  # Adjust range if needed
+
 
 
 @app.route('/api/<random_characters>', methods=['GET'])
@@ -102,24 +130,35 @@ def get_real_ip():
     return ip
 
 
-@app.route('/apiv3/<randomwords>', methods=['GET'])
-def track_user(randomwords):
-    # Get the request details
-    user_agent = request.headers.get('User-Agent')
-    ip_address = get_real_ip()
-    url = request.url
-    device_type = detect_device(user_agent)
 
-    # Log the details to the file
-    with open('all-tracking.txt', 'a') as file:
-        file.write(f"URL: {url}\n")
-        file.write(f"IP Address: {ip_address}\n")
-        file.write(f"User Agent: {user_agent}\n")
-        file.write(f"Device Type: {device_type}\n")
-        file.write("-" * 50 + "\n")
+def save_to_spreadsheet(data):
+    # Prepare the data to be appended
+    body = {
+        'values': [data]
+    }
+    # Append the data to the spreadsheet
+    service.spreadsheets().values().append(
+        spreadsheetId=spreadsheet_id,
+        range=sheet_range,
+        valueInputOption="RAW",
+        insertDataOption="INSERT_ROWS",
+        body=body
+    ).execute()
 
-    return {"message": "Tracking information logged."}, 200
 
+def save_to_spreadsheet_2(data):
+    # Prepare the data to be appended
+    body = {
+        'values': [data]
+    }
+    # Append the data to the spreadsheet
+    service.spreadsheets().values().append(
+        spreadsheetId=spreadsheet_id_2,
+        range=sheet_range,
+        valueInputOption="RAW",
+        insertDataOption="INSERT_ROWS",
+        body=body
+    ).execute()
 
 @app.route('/apiv3/<randomwords>/unsubscribe', methods=['GET', 'POST'])
 def unsubscribe(randomwords):
@@ -130,19 +169,19 @@ def unsubscribe(randomwords):
             ip_address = get_real_ip()
             device_type = detect_device(user_agent)
 
-            with open('unsubscribe.txt', 'a') as file:
-                file.write(f"Email: {email}\n")
-                file.write(f"IP Address: {ip_address}\n")
-                file.write(f"User Agent: {user_agent}\n")
-                file.write(f"Device Type: {device_type}\n")
-                file.write(f"Random Words: {randomwords}\n")
-                file.write("-" * 50 + "\n")
+            data = [
+                email,
+                ip_address,
+                user_agent,
+                device_type,
+                randomwords
+            ]
+            save_to_spreadsheet(data)
 
             return {"message": "You have been unsubscribed."}, 200
         else:
             return {"message": "No email provided."}, 400
 
-    # HTML form to get email address
     unsubscribe_form = '''
     <!DOCTYPE html>
     <html lang="en">
@@ -162,6 +201,26 @@ def unsubscribe(randomwords):
     </html>
     '''
     return render_template_string(unsubscribe_form, randomwords=randomwords)
+
+@app.route('/apiv3/<randomwords>', methods=['GET'])
+def track_user(randomwords):
+    # Get the request details
+    user_agent = request.headers.get('User-Agent')
+    ip_address = get_real_ip()
+    url = request.url
+    device_type = detect_device(user_agent)
+
+    # Log the details to the Google Spreadsheet
+    data = [
+        url,
+        ip_address,
+        user_agent,
+        device_type,
+        randomwords
+    ]
+    save_to_spreadsheet_2(data)
+
+    return {"message": "Success."}, 200
 @app.route('/hello/<name>')
 def hello_name(name):
     return f"Hello, {name}!"
