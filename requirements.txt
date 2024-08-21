@@ -1,5 +1,5 @@
 Flask==2.3.2
 gunicorn==20.1.0
 Faker
-google-auth=2.34.0
-google-api-python-client=2.142.0
+google-auth==2.34.0
+google-api-python-client==2.142.0
