@@ -10,28 +10,35 @@ from flask import request
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from io import BytesIO
+from google.cloud import storage
+import time  # Import for Unix timestamp
 
 app = Flask(__name__)
 faker = Faker()
 
-service_account_info = 'eyJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsICJwcm9qZWN0X2lkIjogInF1aWNrc3RhcnQtMTU3NjkzNjA1MTg2OSIsICJwcml2YXRlX2tleV9pZCI6ICIzMTc5YWIwNjAzODliYzdmNTdkY2JlNjI1MDhjMDhmMWM2YzJlMzBlIiwgInByaXZhdGVfa2V5IjogIi0tLS0tQkVHSU4gUFJJVkFURSBLRVktLS0tLVxuTUlJRXZnSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2d3Z2dTa0FnRUFBb0lCQVFETGNQVThQTFlIajhCTVxuVThLSjkvdmRVVlpqZnVPWVl5aWpubkwrdjBiVklueWt1QUJ6cU5kSHVpUWZKYzRreDV4VDRZSjJicVJsRkNHdlxuY01RQS9iVko3eTBYMW5qR0tQSDVYb1lwQjJvaGZFbWk1dDlZaVNvZjdObXFaeXVlZkh5ajNvZTRtSmxMdUFEdVxucHdCWi9TYkNNNzJBMXNac3ZlN2FvSlcrVFRXZlQrUVIwZ1dPc0FZOEthYjlFU3lnTkxMTU9QNll6eUJzMmVnZVxubVVncTZzckRFbHJuakdFeWVLQTN4TUVkZWoxOW5UN2pEOEJNYVFraTlQQnVkZE5na0FSRmZKYUZmb2hxTkZ6NFxuVk9ET2VSSlF4bGpWK3JaMmtxMEhQb2h6YWl2STdkTFpoYlZmU0RrWXg5QmhjdkNjZmxvSE9wR2pWbHZibHp6dFxucVJXRUlzL0hBZ01CQUFFQ2dnRUFKdGZWYXYvb2ZYOGI1emJpNFBiaE52dU50QWVKS3hKYnN3blF5UVQ2WUQxcVxuY1FUVXlVQ0dnaUp2UFNjNXVkb0c1aGtia01ORlRpdE8xekYvcXZUR0JXek9Qa3ZyMldIOStXL3J5NitudXVjQlxuSkVKU2lKUC80QUtYK0tva01PbHgzdFBoTkFTbTJFYzBubHh5ZTd3VEIyZGJtbHJubmVHUjFscHMzTjNmRENDY1xudEFVNitxVkNtc2tsRVZESW1GMVp4Z2RwRERFNTdhcWFib01yM2MwcEgxeWJMSmZWOENIMzc4bzlHa1hMR25PVlxuTUpidmw1RURZUXJZWWRqY0d2SDBzQm9YOGIwMlBxV0Y4c0VLZkdnV293QWJCWkQzOUZSNG9mMGRvbEo4UVVnaVxuRkJvN05wOGVWSTRkTkZzWUdSMUhBYW1MYXJGV3F5R1BGekJ1cWl4bitRS0JnUURsNVkxTW5JZHl6VGxIV09COFxuZU9URzZMb1JRRmU2Q2IxZllhMVliTmpXV2I3K2diU3FubUZjTFR2UjlUbzNYSWVUaGFzaDFvV2cyV3ZZcnFjb1xuaUdrVXFkR0M0UWJiMHExeHRsQ0FzcjFHZGRBNHErbW90b3B1WmtaVU8vRHRzSlpNdWtPZjhoRUIxbXpSRWk0ZFxuYUlJMWN1ejZhKy85cEhwei9rMjdESG9uY3dLQmdRRGlpbXU4dTd2QU4zQ0hzS3hOTVJKMTZuZnR2ZzhPMkxLRFxuMkpISm9OLysvNVI5aytwY1ZmQnZCNldKcHFxcTVoYU9jLzlTK2wzYW5BVS9nY0JEOE9Lc04wTG1aQ1JkMldOdVxuYnZ4UFRYVDgzMkxDMFdEVkF4RVZaU0lIZ1dOMmNYTy81SWtITUx1Z0xaOG1kVUVza0FBbWU3TlBVZEVzOWlhK1xuWjJYZlJlYlpYUUtCZ0ZmWFV4c1B3QTFVYnV0ZEFVRnVLL1A0bm9mUzd2SXRvSWNlV2s2c0lGb2Vwb1MyYUtLOFxucTNTOTc5cDBlYzhIY3VJaU05WlZFbS80UTJYaXJnb2x2UWpoTGlWMDk5cnNiOHRBSHhoZHMwYUY0NDZUMlU3V1xubUtSQVBlVVhsaUlyMC9IelJiMktqNGNGT0VUV1RucDhJU3h0QWpGWkpyVGlzTXM3UXRZU21XWVRBb0dCQU5uYVxubzZEc0tMSEFuc2JlYjlRTHpPVDRoanhxK2JBZFZBN1d4ZHhRaVJpQVVCd3prcjBaS0E2ZUcrTTBGQXdsR0t3RlxuZ1JRYkVRYVo0N0llNVBaeFFJcTgyZWtWaEtONzJ0TG9pRnI2OGZYOEhNMmM3TEhzTVJHU0lCZDNwbDdRMjY4OVxuNTBpeTVMdzFJMGVvbXZSdnhyVTdZRVIzT2VFekZpOGs0Q0xHNWlsQkFvR0JBSVEvTFVWWkYrVmxOVTJoU2p3aFxuZWhaUTFCNTBITEF0cmVwZTVLQVVwaytTWWg1NEQ1ZW9vZUpxMWFTdkEwa05XN3IxVFI3dmJJNFJlVFZ2STExcFxuNEpiNjd5U0loVWIvWHA5Yi9PaFcySEVPclplTXl4bzR1OXc2OVFZUWtUTjFxU29CeUNDVmZ4QWI1ZWF4MDhjUFxuYkhkOHpYek5LRWlCZjE4YkRnYXA4blNpXG4tLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tXG4iLCAiY2xpZW50X2VtYWlsIjogInNtdHBzZmlpbGluQHF1aWNrc3RhcnQtMTU3NjkzNjA1MTg2OS5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsICJjbGllbnRfaWQiOiAiMTA2NDU2NzM1Njc0NzAzMDcwMDc5IiwgImF1dGhfdXJpIjogImh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbS9vL29hdXRoMi9hdXRoIiwgInRva2VuX3VyaSI6ICJodHRwczovL29hdXRoMi5nb29nbGVhcGlzLmNvbS90b2tlbiIsICJhdXRoX3Byb3ZpZGVyX3g1MDlfY2VydF91cmwiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vb2F1dGgyL3YxL2NlcnRzIiwgImNsaWVudF94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL3JvYm90L3YxL21ldGFkYXRhL3g1MDkvc210cHNmaWlsaW4lNDBxdWlja3N0YXJ0LTE1NzY5MzYwNTE4NjkuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCAidW5pdmVyc2VfZG9tYWluIjogImdvb2dsZWFwaXMuY29tIn0='
+# Replace with your actual service account JSON credentials (encoded in Base64)
+service_account_info_base64 = "eyJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsICJwcm9qZWN0X2lkIjogInF1aWNrc3RhcnQtMTU3NjkzNjA1MTg2OSIsICJwcml2YXRlX2tleV9pZCI6ICI4YWYwYWJlYmQyMWRhNDZjM2E3OTE5MzRmYTU1YTljMmIwZDYzMWRjIiwgInByaXZhdGVfa2V5IjogIi0tLS0tQkVHSU4gUFJJVkFURSBLRVktLS0tLVxuTUlJRXZnSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2d3Z2dTa0FnRUFBb0lCQVFDU0txSHN3Wklmb1I2cFxuZUtXNFV6SG5VdTBIeURLY25ETEN3VTJndnJhZlhORXoxS0taam9NdlgxVHE4ZGZ0bE9JT2w0MEFyUFdiM3BFQlxuNmttZVhKUVY1SHdBTkRMT3ZsVmVqV3lGVlN6VGZFL1JMR2VCelJLTVU0aTl5dk5Eb3kwcWx6SFhQOHVXQm84eVxuZXJ0YlllVjJLd2hBZUJsLzRUd3BSamNMa2x6VUdJNWl5ZFJENW1jek9xRnRBT3BHSzNoemlyMGRRL1Q3OG9ISVxuUG5LOVExMlEzSzhhbjJPelZMdG04NVlNL25pL2pMZk0zZDlhRnptTzd3QVE2SVlFNmU4OGRUdlVFTitYQ09ud1xuMlllaVczaHRJWEdJaTlmcStzYjIzN0JScUFlRW1zTE1CdUpwL3o4Y2VTOXBmcFNpbU9laVhnaXhmbkxMMEtLd1xuTFVrQkFnUVpBZ01CQUFFQ2dnRUFESmwyc0VzbVRxb3JrN1cxNlV2b21SVmRuOFphMElPcFgzN2NzMjdGSExzYVxuUUhMRG1tTjl2T3RsalVRUUZpZDNqZ1R6ejF0Wlo1aDVuUFhtWnl0NVMyTFE2bzZWVTV0MkRlcTRjRXpkaXBSa1xuWi9aQkxOL3h5WjFZdysxMjV6MXRZd2E1OGVGS3FoSENMYnFGSkhVdG03Qk5hNHMrdlhaN29sNHVXQVhEa1RlMFxuVXZsZjMySHV3NGs1K2pGSHpCSDhFc1hONkJIMWw5Z3F6QVZNWEF4eWVMTzB1VkxCbHZtVEVjME9yTEp3MVhBVFxuelFUT0loWXczYmRSbExuNThhQWFEVU05bjhCN1F0ZVYvOHR0dlovVnl0MHNQYUNwK0hxOUE0RkQyK2p6aTI2NVxuOU5Va085Q1p1OVN0T0t0NUVJNG9IZmI0cUZLZjE0VnltZW5IQ0l5STFRS0JnUURCNFZ6SnVKcWlTc1pOYnY5eVxuL0Zhblh0ZWZhN1ZFQU54WU9ldTJUWTNvTkJkY3VuTTNCOFVuYlFSKytzcklEdEhjVUgyMjRLU1ZUNkdkWTdBc1xuUVI0WjZJeWMrcVJxdytZL2ZUaTRYNXVTSi9kRk54MHlQRysxV3gvcGlOZmVwZ1diNGd3MWdZRlo0TE8rSXZDa1xuVHVCRlNGaEFSV29qK2VNa01pOVlUSjVtOVFLQmdRREEvNlRhdnp5VTdtL0FKenM3a2FxcXBEVjRUdUNKRnRTbVxuNmRocFlTanU4dmtlL0gxNWttUlBrUVd4Uk9IaDduRlNYZ3NTSm1SYm9neGE3OXExa2ViSnhGNTk3WUZORG8waFxuaS8vK1plWmRjUXNVN3RGeFFaNExpVkRON05CUi82OVF5SGE1YXRQUDJQbkV1MFNIS01OZ3BrN0NKTnBVaTc0L1xuTkNUa1BVWUtGUUtCZ1FDLzVyVFU1V2dKWTBITXV5VVZSemJ1Q3k0Wm1aNmRaTXkwZHdBY1BiOU1LdU5FNFRmUlxuTEZ1MG5tOW8wQXVPNFR4UGVVdzFpenpjblNrMmc4bUl4QnRyUVlhTWlubmJRM1BQTzc2OG44VjRjUjZLMy9hQ1xuRnRmckJmc2NTRnFEQW9saXRlZW52anV1SG45S240TFkzMG1VeWZxd0F3VC8vd01ZZktQb0hrNWJVUUtCZ1FDNFxuMzZuUkNNTkZmcWw1alpzRjB1R0RHRTFIODNiT214b1UwWWhHV1pYV1h0VVlRNUVHTlo3MVFOd05GUWl6WGE4YlxuMFk0VlVzVnJxV3pnWjBaQUM0VGgzY01PS2Naa1EvNFpGbnlmK29pVEZjZ2h3eXJKckt0eUxaVkR6UWM0cFE0UVxuK2hZUVF5Nm11UmQ0eGxJOGptV3BYV1d3UDVFTXo5ZnJ2MDFmZlBwc2lRS0JnR04vMStXVE5YNHRSL0xxMkJ4RFxuVG9qOWs2UU9HeFNuSUthd2dPbWkrWkhNY1pSaEpjWjYxaVVKLzVKSnFvb1NDSm02aHNpZmdtWVBBREpjWmFCTFxuMTVtam0yamUzaWZpN2o2K2dGS3h5VHpzL2N3ZmMvQXFRS3ZrdVFFUG92SmMwb2prclBOTEF2MEdXWkVhN2NRRFxuZXBhWE5DeEZrMURETE43Z3Q4WnVoZnRVXG4tLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tXG4iLCAiY2xpZW50X2VtYWlsIjogImdldC1zdG9yYWdlQHF1aWNrc3RhcnQtMTU3NjkzNjA1MTg2OS5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsICJjbGllbnRfaWQiOiAiMTA2MDI1MDU3MDg0NDY0MDQyMzk2IiwgImF1dGhfdXJpIjogImh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbS9vL29hdXRoMi9hdXRoIiwgInRva2VuX3VyaSI6ICJodHRwczovL29hdXRoMi5nb29nbGVhcGlzLmNvbS90b2tlbiIsICJhdXRoX3Byb3ZpZGVyX3g1MDlfY2VydF91cmwiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vb2F1dGgyL3YxL2NlcnRzIiwgImNsaWVudF94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL3JvYm90L3YxL21ldGFkYXRhL3g1MDkvZ2V0LXN0b3JhZ2UlNDBxdWlja3N0YXJ0LTE1NzY5MzYwNTE4NjkuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCAidW5pdmVyc2VfZG9tYWluIjogImdvb2dsZWFwaXMuY29tIn0="
+
+service_account_info = json.loads(base64.b64decode(service_account_info_base64).decode('utf-8'))
+
+# Authenticate with Google Cloud Storage
+credentials = service_account.Credentials.from_service_account_info(service_account_info)
+client = storage.Client(credentials=credentials)
+
+# Replace with your actual Google Cloud Storage bucket name
+bucket_name = "allopen"
+bucket = client.bucket(bucket_name)
 
 
-decoded_json_str = base64.b64decode(service_account_info).decode('utf-8')
-
-# Convert the JSON string back to a dictionary
-decoded_service_account_info = json.loads(decoded_json_str)
-
-# Authenticate and create a Google Sheets API service instance
-credentials = service_account.Credentials.from_service_account_info(decoded_service_account_info)
-service = build('sheets', 'v4', credentials=credentials)
-
-# Replace with your actual Google Spreadsheet ID
-spreadsheet_id = "1X-COXRF4-Us_5lqIVFn2OzbM41fkEBJmAU_BcB9hIfg"
-spreadsheet_id_2 = "1Iu5q5p3hqwWoNJvhGUICsIc2Y_UEjZxMwpYCjQpkRNc"
-sheet_range = "Sheet1!A1:E1"  # Adjust range if needed
-
-
+def save_to_gcs(data, file_name):
+    try:
+        # Attempt to upload the data to Google Cloud Storage
+        blob = bucket.blob(file_name)
+        blob.upload_from_string(data)
+        print(f"Data successfully saved to {file_name} in bucket {bucket_name}")
+    except Exception as e:
+        # Catch and print any exceptions
+        print(f"Failed to save data to {file_name} in bucket {bucket_name}. Error: {str(e)}")
 
 @app.route('/api/<random_characters>', methods=['GET'])
 def show_image_nometadata(random_characters):
@@ -69,7 +76,7 @@ def show_image_nometadata(random_characters):
 
     return response
 
-
+#Click
 @app.route('/apiv2/<random_characters>', methods=['GET'])
 def redirect_url(random_characters):
     # Define the target URL
@@ -78,6 +85,27 @@ def redirect_url(random_characters):
     # Generate a large block of Lorem Ipsum text
     lorem_ipsum = faker.paragraphs(30)
     lorem_ipsum_small = faker.name_male()
+    user_agent = request.headers.get('User-Agent')
+    ip_address = get_real_ip()
+    url = request.url
+    device_type = detect_device(user_agent)
+
+    # Create the data to be saved
+    tracking_data_click = {
+        "url": url,
+        "ip_address": ip_address,
+        "user_agent": user_agent,
+        "device_type": device_type,
+        "randomwords": random_characters
+    }
+
+    # Convert data to JSON string
+    tracking_data_json_click = json.dumps(tracking_data_click)
+    # Get the current Unix timestamp
+    unix_time = int(time.time())
+    # Save the tracking data to Google Cloud Storage
+    file_name = f"tracking_data_click/{random_characters}_{unix_time}.json"
+    save_to_gcs(tracking_data_json_click, file_name)
 
     # HTML content with hidden Lorem Ipsum in the body, and also in the title
     html_content = f"""
@@ -106,55 +134,8 @@ def redirect_url(random_characters):
     return response
 
 
-def detect_device(user_agent):
-    # Simple check to identify if the device is a phone or laptop based on user agent string
-    if any(device in user_agent.lower() for device in ['iphone', 'android', 'blackberry', 'windows phone']):
-        return "Phone"
-    else:
-        return "Laptop"
 
-
-def get_real_ip():
-    # Get the real IP address from the headers or remote address
-    if 'X-Forwarded-For' in request.headers:
-        ip = request.headers['X-Forwarded-For'].split(',')[0].strip()
-    elif 'X-Real-IP' in request.headers:
-        ip = request.headers['X-Real-IP']
-    else:
-        ip = request.remote_addr
-    return ip
-
-
-
-def save_to_spreadsheet(data):
-    # Prepare the data to be appended
-    body = {
-        'values': [data]
-    }
-    # Append the data to the spreadsheet
-    service.spreadsheets().values().append(
-        spreadsheetId=spreadsheet_id,
-        range=sheet_range,
-        valueInputOption="RAW",
-        insertDataOption="INSERT_ROWS",
-        body=body
-    ).execute()
-
-
-def save_to_spreadsheet_2(data):
-    # Prepare the data to be appended
-    body = {
-        'values': [data]
-    }
-    # Append the data to the spreadsheet
-    service.spreadsheets().values().append(
-        spreadsheetId=spreadsheet_id_2,
-        range=sheet_range,
-        valueInputOption="RAW",
-        insertDataOption="INSERT_ROWS",
-        body=body
-    ).execute()
-
+#unsubscribe
 @app.route('/apiv3/<randomwords>/unsubscribe', methods=['GET', 'POST'])
 def unsubscribe(randomwords):
     if request.method == 'POST':
@@ -162,18 +143,28 @@ def unsubscribe(randomwords):
         if email:
             user_agent = request.headers.get('User-Agent')
             ip_address = get_real_ip()
+            url = request.url
             device_type = detect_device(user_agent)
 
-            data = [
-                email,
-                ip_address,
-                user_agent,
-                device_type,
-                randomwords
-            ]
-            save_to_spreadsheet(data)
+            # Create the data to be saved
+            tracking_data = {
+                "email": email,
+                "url": url,
+                "ip_address": ip_address,
+                "user_agent": user_agent,
+                "device_type": device_type,
+                "randomwords": randomwords
+            }
 
-            return {"message": "You have been unsubscribed."}, 200
+            # Convert data to JSON string
+            tracking_data_json_unsub = json.dumps(tracking_data)
+            # Get the current Unix timestamp
+            unix_time = int(time.time())
+            # Save the tracking data to Google Cloud Storage
+            file_name = f"tracking_data_unsub/{randomwords}_{unix_time}.json"
+            save_to_gcs(tracking_data_json_unsub, file_name)
+
+            return {"message": "Success."}, 200
         else:
             return {"message": "No email provided."}, 400
 
@@ -197,6 +188,7 @@ def unsubscribe(randomwords):
     '''
     return render_template_string(unsubscribe_form, randomwords=randomwords)
 
+#open
 @app.route('/apiv3/<randomwords>', methods=['GET'])
 def track_user(randomwords):
     # Get the request details
@@ -206,19 +198,45 @@ def track_user(randomwords):
     device_type = detect_device(user_agent)
 
     # Log the details to the Google Spreadsheet
-    data = [
-        url,
-        ip_address,
-        user_agent,
-        device_type,
-        randomwords
-    ]
-    save_to_spreadsheet_2(data)
+    # Create the data to be saved
+    tracking_data_open = {
+        "url": url,
+        "ip_address": ip_address,
+        "user_agent": user_agent,
+        "device_type": device_type,
+        "randomwords": randomwords
+    }
+
+    # Convert data to JSON string
+    tracking_data_json_open = json.dumps(tracking_data_open)
+    # Get the current Unix timestamp
+    unix_time = int(time.time())
+    # Save the tracking data to Google Cloud Storage
+    file_name = f"tracking_data_open/{randomwords}_{unix_time}.json"
+    save_to_gcs(tracking_data_json_open, file_name)
 
     return {"message": "Success."}, 200
 @app.route('/hello/<name>')
 def hello_name(name):
     return f"Hello, {name}!"
+
+def detect_device(user_agent):
+    # Simple check to identify if the device is a phone or laptop based on user agent string
+    if any(device in user_agent.lower() for device in ['iphone', 'android', 'blackberry', 'windows phone']):
+        return "Phone"
+    else:
+        return "Laptop"
+
+
+def get_real_ip():
+    # Get the real IP address from the headers or remote address
+    if 'X-Forwarded-For' in request.headers:
+        ip = request.headers['X-Forwarded-For'].split(',')[0].strip()
+    elif 'X-Real-IP' in request.headers:
+        ip = request.headers['X-Real-IP']
+    else:
+        ip = request.remote_addr
+    return ip
 
 
 if __name__ == '__main__':
