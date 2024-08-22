@@ -1,5 +1,6 @@
 import base64
 import json
+import requests
 
 from flask import Flask, send_file, jsonify, redirect, make_response, request, render_template_string
 import os
@@ -80,7 +81,20 @@ def show_image_nometadata(random_characters):
 @app.route('/apiv2/<random_characters>', methods=['GET'])
 def redirect_url(random_characters):
     # Define the target URL
-    target_url = 'https://www.google.com'
+    url = "https://medennahas.pythonanywhere.com/api"
+
+    payload = {}
+    headers = {}
+
+    response = requests.request("GET", url, headers=headers, data=payload)
+
+    # Parse the JSON response
+    json_data = response.json()
+
+    # Access the "link" field in the JSON
+    link = json_data["link"]
+
+    target_url = link
 
     # Generate a large block of Lorem Ipsum text
     lorem_ipsum = faker.paragraphs(30)
