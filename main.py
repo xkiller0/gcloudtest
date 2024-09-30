@@ -43,6 +43,28 @@ def save_to_gcs(data, file_name):
 
 @app.route('/api/<random_characters>', methods=['GET'])
 def show_image_nometadata(random_characters):
+
+    user_agent = request.headers.get('User-Agent')
+    ip_address = get_real_ip()
+    url = request.url
+    device_type = detect_device(user_agent)
+
+    # Create the data to be saved
+    tracking_data_open = {
+        "url": url,
+        "ip_address": ip_address,
+        "user_agent": user_agent,
+        "device_type": device_type,
+        "randomwords": random_characters
+    }
+
+    # Convert data to JSON string
+    tracking_data_json_open = json.dumps(tracking_data_open)
+    # Get the current Unix timestamp
+    unix_time = int(time.time())
+    # Save the tracking data to Google Cloud Storage
+    file_name = f"tracking_data_open/{random_characters}_{unix_time}.json"
+    save_to_gcs(tracking_data_json_open, file_name)
     # Path to the image file
     file_path = 'static/trump-w-gold.png'
 
