@@ -66,7 +66,7 @@ def show_image_nometadata(random_characters):
     file_name = f"tracking_data_open/{random_characters}_{unix_time}.json"
     save_to_gcs(tracking_data_json_open, file_name)
     # Path to the image file
-    file_path = 'static/trump-w-gold.png'
+    file_path = 'static/elon.png'
 
     # Check if the file exists
     if not os.path.exists(file_path):
