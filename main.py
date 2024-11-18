@@ -26,17 +26,20 @@ def checkifproxy(ip):
 
     response = requests.request("GET", url, headers=headers, data=payload)
 
-    # Check if the response status code is 200
     if response.status_code == 200:
         # Parse the JSON response
         data = response.json()
 
-        # Check if all threat-related values are False
-        all_safe = all(value is False for key, value in data["threat"].items() if isinstance(value, bool))
+        # Check if the country_code is "US"
+        if data.get("country_code") == "US":
+            # Check if all threat-related values are False
+            all_safe = all(value is False for key, value in data["threat"].items() if isinstance(value, bool))
 
-        if all_safe:
-            return True
-            # Add your custom action here
+            if all_safe:
+                return True
+                # Add your custom action here
+            else:
+                return False
         else:
             return False
     else:
