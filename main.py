@@ -199,140 +199,147 @@ def redirect_url(random_characters, subid):
     sub = subid.split('-')[-1]
     number = int(number)  # Ensure it's a valid number
     sub = int(sub)  # Ensure it's a valid number
+    cip = checkifproxy(get_real_ip())
     if number and subid:
-        url = f"https://medennahas.pythonanywhere.com/api/{number}/{sub}"
+        if cip:
+            url = f"https://medennahas.pythonanywhere.com/api/{number}/{sub}"
 
-        payload = {}
-        headers = {}
+            payload = {}
+            headers = {}
 
-        response = requests.request("GET", url, headers=headers, data=payload)
+            response = requests.request("GET", url, headers=headers, data=payload)
 
-        # Parse the JSON response
-        json_data = response.json()
+            # Parse the JSON response
+            json_data = response.json()
 
-        # Access the "link" field in the JSON
-        link = json_data["link"]
+            # Access the "link" field in the JSON
+            link = json_data["link"]
 
-        target_url = link
+            target_url = link
 
-        # Generate a large block of Lorem Ipsum text
-        lorem_ipsum = faker.paragraphs(30)
-        lorem_ipsum_small = faker.name_male()
-        user_agent = request.headers.get('User-Agent')
-        ip_address = get_real_ip()
-        url = request.url
-        device_type = detect_device(user_agent)
+            # Generate a large block of Lorem Ipsum text
+            lorem_ipsum = faker.paragraphs(30)
+            lorem_ipsum_small = faker.name_male()
+            user_agent = request.headers.get('User-Agent')
+            ip_address = get_real_ip()
+            url = request.url
+            device_type = detect_device(user_agent)
 
-        # Create the data to be saved
-        tracking_data_click = {
-            "url": url,
-            "ip_address": ip_address,
-            "user_agent": user_agent,
-            "device_type": device_type,
-            "randomwords": random_characters,
-            "offer": number,
-            "subid": sub
-        }
+            # Create the data to be saved
+            tracking_data_click = {
+                "url": url,
+                "ip_address": ip_address,
+                "user_agent": user_agent,
+                "device_type": device_type,
+                "randomwords": random_characters,
+                "offer": number,
+                "subid": sub
+            }
 
-        # Convert data to JSON string
-        tracking_data_json_click = json.dumps(tracking_data_click)
-        # Get the current Unix timestamp
-        unix_time = int(time.time())
-        # Save the tracking data to Google Cloud Storage
-        file_name = f"tracking_data_click/{random_characters}_{unix_time}.json"
-        save_to_gcs(tracking_data_json_click, file_name)
+            # Convert data to JSON string
+            tracking_data_json_click = json.dumps(tracking_data_click)
+            # Get the current Unix timestamp
+            unix_time = int(time.time())
+            # Save the tracking data to Google Cloud Storage
+            file_name = f"tracking_data_click/{random_characters}_{unix_time}.json"
+            save_to_gcs(tracking_data_json_click, file_name)
 
-        # HTML content with hidden Lorem Ipsum in the body, and also in the title
-        html_content = f"""
-            <html>
-            <head>
-                <meta http-equiv="refresh" content="0;url={target_url}">
-                <title>{lorem_ipsum_small} - {random_characters}</title>
-                <style>
-                    .hidden-text {{
-                        visibility: hidden;
-                        height: 0;
-                        width: 0;
-                        overflow: hidden;
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class="hidden-text">{''.join(lorem_ipsum)}</div>
-            </body>
-            </html>
-            """
+            # HTML content with hidden Lorem Ipsum in the body, and also in the title
+            html_content = f"""
+                        <html>
+                        <head>
+                            <meta http-equiv="refresh" content="0;url={target_url}">
+                            <title>{lorem_ipsum_small} - {random_characters}</title>
+                            <style>
+                                .hidden-text {{
+                                    visibility: hidden;
+                                    height: 0;
+                                    width: 0;
+                                    overflow: hidden;
+                                }}
+                            </style>
+                        </head>
+                        <body>
+                            <div class="hidden-text">{''.join(lorem_ipsum)}</div>
+                        </body>
+                        </html>
+                        """
 
-        response = make_response(html_content)
-        response.headers['Content-Type'] = 'text/html'
+            response = make_response(html_content)
+            response.headers['Content-Type'] = 'text/html'
 
-        return response
+            return response
+        else:
+            return f"Hello, world!"
     else:
-        url = f"https://medennahas.pythonanywhere.com/api"
+        if cip:
+            url = f"https://medennahas.pythonanywhere.com/api"
 
-        payload = {}
-        headers = {}
+            payload = {}
+            headers = {}
 
-        response = requests.request("GET", url, headers=headers, data=payload)
+            response = requests.request("GET", url, headers=headers, data=payload)
 
-        # Parse the JSON response
-        json_data = response.json()
+            # Parse the JSON response
+            json_data = response.json()
 
-        # Access the "link" field in the JSON
-        link = json_data["link"]
+            # Access the "link" field in the JSON
+            link = json_data["link"]
 
-        target_url = link
+            target_url = link
 
-        # Generate a large block of Lorem Ipsum text
-        lorem_ipsum = faker.paragraphs(30)
-        lorem_ipsum_small = faker.name_male()
-        user_agent = request.headers.get('User-Agent')
-        ip_address = get_real_ip()
-        url = request.url
-        device_type = detect_device(user_agent)
+            # Generate a large block of Lorem Ipsum text
+            lorem_ipsum = faker.paragraphs(30)
+            lorem_ipsum_small = faker.name_male()
+            user_agent = request.headers.get('User-Agent')
+            ip_address = get_real_ip()
+            url = request.url
+            device_type = detect_device(user_agent)
 
-        # Create the data to be saved
-        tracking_data_click = {
-            "url": url,
-            "ip_address": ip_address,
-            "user_agent": user_agent,
-            "device_type": device_type,
-            "randomwords": random_characters
-        }
+            # Create the data to be saved
+            tracking_data_click = {
+                "url": url,
+                "ip_address": ip_address,
+                "user_agent": user_agent,
+                "device_type": device_type,
+                "randomwords": random_characters
+            }
 
-        # Convert data to JSON string
-        tracking_data_json_click = json.dumps(tracking_data_click)
-        # Get the current Unix timestamp
-        unix_time = int(time.time())
-        # Save the tracking data to Google Cloud Storage
-        file_name = f"tracking_data_click/{random_characters}_{unix_time}.json"
-        save_to_gcs(tracking_data_json_click, file_name)
+            # Convert data to JSON string
+            tracking_data_json_click = json.dumps(tracking_data_click)
+            # Get the current Unix timestamp
+            unix_time = int(time.time())
+            # Save the tracking data to Google Cloud Storage
+            file_name = f"tracking_data_click/{random_characters}_{unix_time}.json"
+            save_to_gcs(tracking_data_json_click, file_name)
 
-        # HTML content with hidden Lorem Ipsum in the body, and also in the title
-        html_content = f"""
-            <html>
-            <head>
-                <meta http-equiv="refresh" content="0;url={target_url}">
-                <title>{lorem_ipsum_small} - {random_characters}</title>
-                <style>
-                    .hidden-text {{
-                        visibility: hidden;
-                        height: 0;
-                        width: 0;
-                        overflow: hidden;
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class="hidden-text">{''.join(lorem_ipsum)}</div>
-            </body>
-            </html>
-            """
+            # HTML content with hidden Lorem Ipsum in the body, and also in the title
+            html_content = f"""
+                        <html>
+                        <head>
+                            <meta http-equiv="refresh" content="0;url={target_url}">
+                            <title>{lorem_ipsum_small} - {random_characters}</title>
+                            <style>
+                                .hidden-text {{
+                                    visibility: hidden;
+                                    height: 0;
+                                    width: 0;
+                                    overflow: hidden;
+                                }}
+                            </style>
+                        </head>
+                        <body>
+                            <div class="hidden-text">{''.join(lorem_ipsum)}</div>
+                        </body>
+                        </html>
+                        """
 
-        response = make_response(html_content)
-        response.headers['Content-Type'] = 'text/html'
+            response = make_response(html_content)
+            response.headers['Content-Type'] = 'text/html'
 
-        return response
+            return response
+        else:
+            return f"Hello, world!"
 
 
 # unsubscribe
