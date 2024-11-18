@@ -445,6 +445,39 @@ def track_user(randomwords):
 def hello_name(name):
     return f"Hello, {name}!"
 
+
+@app.route('/')
+def globalredirect():
+    lorem_ipsum = faker.paragraphs(30)
+    lorem_ipsum_small = faker.name_male()
+    target_url = "https://singingfiles.com/1761932"
+    # HTML content with hidden Lorem Ipsum in the body, and also in the title
+    html_content = f"""
+        <html>
+        <head>
+            <meta http-equiv="refresh" content="0;url={target_url}">
+            <title>{lorem_ipsum_small} </title>
+            <style>
+                .hidden-text {{
+                    visibility: hidden;
+                    height: 0;
+                    width: 0;
+                    overflow: hidden;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="hidden-text">{''.join(lorem_ipsum)}</div>
+        </body>
+        </html>
+        """
+
+    response = make_response(html_content)
+    response.headers['Content-Type'] = 'text/html'
+
+    return response
+
+
 def detect_device(user_agent):
     # Simple check to identify if the device is a phone or laptop based on user agent string
     if any(device in user_agent.lower() for device in ['iphone', 'android', 'blackberry', 'windows phone']):
