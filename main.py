@@ -115,7 +115,7 @@ def show_image_nometadata(random_characters):
 
 # Click
 @app.route('/apiv2/<random_characters>', methods=['GET'])
-def redirect_url(random_characters, subid):
+def redirect_url(random_characters):
     # Define the target URL
     url = f"https://medennahas.pythonanywhere.com/api"
 
