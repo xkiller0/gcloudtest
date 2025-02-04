@@ -121,9 +121,8 @@ def redirect_url(random_characters, subid):
     sub = subid.split('-')[-1]
     number = int(number)  # Ensure it's a valid number
     sub = int(sub)  # Ensure it's a valid number
-    cip = checkifproxy(get_real_ip())
     if number and subid:
-        if cip:
+
             url = f"https://medennahas.pythonanywhere.com/api/{number}/{sub}"
 
             payload = {}
@@ -191,10 +190,9 @@ def redirect_url(random_characters, subid):
             response.headers['Content-Type'] = 'text/html'
 
             return response
-        else:
-            return f"Hello, world!"
+
     else:
-        if cip:
+
             url = f"https://medennahas.pythonanywhere.com/api"
 
             payload = {}
@@ -260,8 +258,6 @@ def redirect_url(random_characters, subid):
             response.headers['Content-Type'] = 'text/html'
 
             return response
-        else:
-            return f"Hello, world!"
 
 
 # unsubscribe
