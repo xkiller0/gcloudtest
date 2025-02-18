@@ -71,7 +71,7 @@ def save_to_gcs(data, file_name):
         print(f"Failed to save data to {file_name} in bucket {bucket_name}. Error: {str(e)}")
 
 @app.route('/api_jv/<path:random_characters>', methods=['GET'])
-def show_image_nometadata(random_characters):
+def show_image_nometadata_jv(random_characters):
     try:
         # Path to the image file
         file_path = f'static/jv_1.png'
@@ -227,7 +227,7 @@ def redirect_url(random_characters):
 
 # Click
 @app.route('/apiv2_jv/<random_characters>', methods=['GET'])
-def redirect_url(random_characters):
+def redirect_url_jv(random_characters):
     # Define the target URL
     url = f"https://medennahas.pythonanywhere.com/api_jv"
 
