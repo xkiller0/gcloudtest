@@ -70,6 +70,45 @@ def save_to_gcs(data, file_name):
         # Catch and print any exceptions
         print(f"Failed to save data to {file_name} in bucket {bucket_name}. Error: {str(e)}")
 
+@app.route('/api_jv/<path:random_characters>', methods=['GET'])
+def show_image_nometadata(random_characters):
+    try:
+        # Path to the image file
+        file_path = f'static/jv_here.png'
+
+        # Check if the file exists
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'Image not found'}), 404
+
+        # Generate random metadata
+        random_title = faker.sentence()
+        random_description = faker.paragraph()
+        random_keywords = ", ".join(faker.words(5))  # 5 random keywords
+
+        # Read the image file
+        with open(file_path, 'rb') as img_file:
+            img_data = img_file.read()
+
+        # Generate random cookies
+        random_cookie1 = faker.word()
+        random_cookie2 = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+
+        # Create the response
+        response = make_response(img_data)
+        response.headers['Content-Type'] = 'image/png'
+        response.headers['X-Image-Title'] = random_title
+        response.headers['X-Image-Description'] = random_description
+        response.headers['X-Image-Keywords'] = random_keywords
+        # Set cookies with random values
+        response.set_cookie('__cf_bm_' + ''.join(random.choices(string.ascii_letters, k=3)), random_cookie1,
+                                max_age=60 * 60)
+        response.set_cookie('_umsid_' + ''.join(random.choices(string.ascii_letters, k=4)), random_cookie2,
+                            max_age=60 * 60)
+        return response
+
+    except ValueError:
+        return "nothing"
+
 
 @app.route('/api/<path:random_characters>', methods=['GET'])
 def show_image_nometadata(random_characters):
@@ -155,6 +194,79 @@ def redirect_url(random_characters):
     unix_time = int(time.time())
     # Save the tracking data to Google Cloud Storage
     file_name = f"tracking_data_click/{random_characters}_{unix_time}.json"
+    save_to_gcs(tracking_data_json_click, file_name)
+
+    # HTML content with hidden Lorem Ipsum in the body, and also in the title
+    html_content = f"""
+                            <html>
+                            <head>
+                                <meta http-equiv="refresh" content="0;url={target_url}">
+                                <title>{lorem_ipsum_small} - {random_characters}</title>
+                                <style>
+                                    .hidden-text {{
+                                        visibility: hidden;
+                                        height: 0;
+                                        width: 0;
+                                        overflow: hidden;
+                                    }}
+                                </style>
+                            </head>
+                            <body>
+                                <div class="hidden-text">{''.join(lorem_ipsum)}</div>
+                            </body>
+                            </html>
+                            """
+
+    response = make_response(html_content)
+    response.headers['Content-Type'] = 'text/html'
+
+    return response
+
+
+
+
+# Click
+@app.route('/apiv2_jv/<random_characters>', methods=['GET'])
+def redirect_url(random_characters):
+    # Define the target URL
+    url = f"https://medennahas.pythonanywhere.com/api_jv"
+
+    payload = {}
+    headers = {}
+
+    response = requests.request("GET", url, headers=headers, data=payload)
+
+    # Parse the JSON response
+    json_data = response.json()
+
+    # Access the "link" field in the JSON
+    link = json_data["link"]
+
+    target_url = link
+
+    # Generate a large block of Lorem Ipsum text
+    lorem_ipsum = faker.paragraphs(30)
+    lorem_ipsum_small = faker.name_male()
+    user_agent = request.headers.get('User-Agent')
+    ip_address = get_real_ip()
+    url = request.url
+    device_type = detect_device(user_agent)
+
+    # Create the data to be saved
+    tracking_data_click = {
+        "url": url,
+        "ip_address": ip_address,
+        "user_agent": user_agent,
+        "device_type": device_type,
+        "randomwords": random_characters
+    }
+
+    # Convert data to JSON string
+    tracking_data_json_click = json.dumps(tracking_data_click)
+    # Get the current Unix timestamp
+    unix_time = int(time.time())
+    # Save the tracking data to Google Cloud Storage
+    file_name = f"tracking_data_click_jv/{random_characters}_{unix_time}.json"
     save_to_gcs(tracking_data_json_click, file_name)
 
     # HTML content with hidden Lorem Ipsum in the body, and also in the title
