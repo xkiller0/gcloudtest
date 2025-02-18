@@ -74,7 +74,7 @@ def save_to_gcs(data, file_name):
 def show_image_nometadata(random_characters):
     try:
         # Path to the image file
-        file_path = f'static/jv_here.png'
+        file_path = f'static/jv_1.png'
 
         # Check if the file exists
         if not os.path.exists(file_path):
